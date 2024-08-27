@@ -12,25 +12,26 @@ def process_complaint(audio_file, order_notes, damaged_image, correct_image):
     headers = {'Authorization': f'Bearer {WORQHAT_API_KEY}'}
 
     files = [
-        ('audio_file', (audio_file.name, audio_file, audio_file.type)),
-        ('damaged_image', (damaged_image.name, damaged_image, damaged_image.type)),
-        ('correct_image', (correct_image.name, correct_image, correct_image.type))
+        ('files', (audio_file.name, audio_file, audio_file.type)),
+        ('files', (damaged_image.name, damaged_image, damaged_image.type)),
+        ('files', (correct_image.name, correct_image, correct_image.type))
     ]
 
     data = {
         'model': 'aicon-v4-nano-160824',
         "question": "analyze the complaint. use the audio file to analyse the conversation and the images to analyse the damage. also use the order notes to understand the context. return the output in the json format\n\n  Order Notes: " + order_notes,
         "response_type": "json",
-        "training_data": """return the output in the following json format:
+        "training_data": """damage analysis is the comparison between the two images. the output should be a score between 0 and 10. return the output in the following json format:
                                     {
                                     "damage analysis": {
                         "type": "score",
                         "range": [0, 10],
-                        "description": "Damage score indicating the level of damage from 0 (no damage) to 10 (severely damaged)."
+                        "description": "Damage score indicating the level of damage from 0 (no damage) to 10 (severely damaged). the first image is the damaged product and the second image is the correct product"
                     },
                                             "audio analysis": {
-                            "emotions": "Summary of detected emotions.",
+                            "emotions": "Summary of detected emotions of the customer in the audio file.",
                             "summary": "Brief summary of the complaint.",
+                            "potential_resolution": "Potential resolution for the complaint as addressed by the customer.",
                             "key_points": "List of notable points mentioned in the complaint."
                         },
                         summary: summary of everything combined including the order notes
