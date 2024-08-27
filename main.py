@@ -1,18 +1,54 @@
 import streamlit as st
+import requests
+import json
 
-def process_complaint(audio_file, order_notes, damaged_image, correct_image):
-    # Process the complaint data here
-    # You can add your logic to analyze the audio, order notes, and images
-    # For demonstration purposes, we'll just print the data
-    print("Audio File:", audio_file)
-    print("Order Notes:", order_notes)
-    print("Damaged Image:", damaged_image)
-    print("Correct Image:", correct_image)
-
-    # Display a success message
-    st.success("Complaint processed successfully!")
+WORQHAT_API_KEY = "sk-caf41a358afe456286cd91f12c93199c"
+WORQHAT_ENDPOINT_URL = "https://api.worqhat.com/api/ai/content/v4"
 
 st.title("Complaint Analysis")
+
+def process_complaint(audio_file, order_notes, damaged_image, correct_image):
+    url = WORQHAT_ENDPOINT_URL
+    headers = {'Authorization': f'Bearer {WORQHAT_API_KEY}'}
+
+    files = [
+        ('audio_file', (audio_file.name, audio_file, audio_file.type)),
+        ('damaged_image', (damaged_image.name, damaged_image, damaged_image.type)),
+        ('correct_image', (correct_image.name, correct_image, correct_image.type))
+    ]
+
+    data = {
+        'model': 'aicon-v4-nano-160824',
+        "question": "analyze the complaint. use the audio file to analyse the conversation and the images to analyse the damage. also use the order notes to understand the context. return the output in the json format\n\n  Order Notes: " + order_notes,
+        "response_type": "json",
+        "training_data": """return the output in the following json format:
+                                    {
+                                    "damage analysis": {
+                        "type": "score",
+                        "range": [0, 10],
+                        "description": "Damage score indicating the level of damage from 0 (no damage) to 10 (severely damaged)."
+                    },
+                                            "audio analysis": {
+                            "emotions": "Summary of detected emotions.",
+                            "summary": "Brief summary of the complaint.",
+                            "key_points": "List of notable points mentioned in the complaint."
+                        },
+                        summary: summary of everything combined including the order notes
+
+        }
+"""
+    }
+
+    response = requests.post(url, headers=headers, files=files, data=data)
+
+    if response.status_code == 200:
+        result = response.json()
+        print("Response received:", json.dumps(result, indent=4))
+        st.success("Complaint processed successfully!")
+        st.json(result)
+    else:
+        print("Error:", response.status_code, response.text)
+        st.error(f"Error processing complaint: {response.text}")
 
 # Audio conversation input
 audio_file = st.file_uploader("Upload Audio Conversation", type=["wav", "mp3"])
